@@ -40,7 +40,7 @@
               <tr>
                 <th>Sl.No</th>
                 <th>Actions</th>
-                <th>Department Code</th>
+                {% comment %} <th>Department Code</th> {% endcomment %}
                 <th>Department Name</th>
                 <th>Department Description</th>
               </tr>
@@ -110,7 +110,7 @@
   </div>
 </td>
 
-                <td>{{ dept.department_id }}</td>
+                {% comment %} <td>{{ dept.department_id }}</td> {% endcomment %}
                 <td>{{ dept.dept_name }}</td>
                 <td>{{ dept.dept_description }}</td>
               </tr>

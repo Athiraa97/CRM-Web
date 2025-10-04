@@ -34,7 +34,7 @@
               <tr>
                 <th>Sl.No</th>
                 <th>Actions</th>
-                <th>Location ID</th>
+                {% comment %} <th>Location ID</th> {% endcomment %}
                 <th>Location Name</th>
                 <th>Location Description</th>
               </tr>
@@ -96,7 +96,7 @@
                   </div>
                 </td>
 
-                <td>{{ loc.location_id }}</td>
+                {% comment %} <td>{{ loc.location_id }}</td> {% endcomment %}
                 <td>{{ loc.loc_name }}</td>
                 <td>{{ loc.loc_description }}</td>
                
