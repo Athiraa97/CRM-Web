@@ -49,7 +49,7 @@ def get_designations() -> List[Dict]:
         cursor.execute(sql)
         return dictfetchall(cursor)
 
-def is_designation_used(department_id) -> bool:
+def is_designation_used(designation_id) -> bool:
     """Skip check since no related table exists yet."""
     return 
 
@@ -70,6 +70,6 @@ def get_locations() -> List[Dict]:
         cursor.execute(sql)
         return dictfetchall(cursor)
 
-def is_location_used(department_id) -> bool:
+def is_location_used(location_id) -> bool:
     """Skip check since no related table exists yet."""
     return False
