@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Department List{% endblock %}
+
+{% block content %}
+<div class="pagetitle">
+  <h1>Department List</h1>
+  <nav>
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="#">Home</a></li>
+      <li class="breadcrumb-item">Master</li>
+      <li class="breadcrumb-item active">Department</li>
+    </ol>
+  </nav>
+</div>
+
+<section class="section">
+  <div class="row">
+    <div class="col-lg-12">
+      <div class="card border border-primary">
+        <div class="card-body">
+          <div class="card-title">
+            <div class="d-lg-flex">
+              <div>
+                <h5 class="card-heading">List Of Department</h5>
+              </div>
+              <div class="ms-auto my-auto mt-lg-0 mt-4">
+                <a href="{% url 'department_add' %}">
+                  <button type="button" class="btn btn-success">
+                    <i class="bi bi-plus-circle me-1"></i> Add Department
+                  </button>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <table class="display responsive" style="width:100%" id="myTable">
+            <thead>
+              <tr>
+                <th>Sl.No</th>
+                <th>Actions</th>
+                <th>Department Code</th>
+                <th>Department Name</th>
+                <th>Department Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for dept in departments %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>
+  <div class="d-flex">
+    <!-- Edit Button -->
+    <a href="{% url 'department_edit' dept.department_id %}">
+      <button type="button" class="btn btn-outline-info" title="Edit">
+        <i class="bi bi-pencil-fill"></i>
+      </button>
+    </a>&nbsp;
+
+    <!-- View Button -->
+    <a href="{% url 'department_detail' dept.department_id %}">
+      <button type="button" class="btn btn-outline-success" title="View">
+        <i class="bi bi-eye-fill"></i>
+      </button>
+    </a>&nbsp;
+
+    <!-- Delete Button -->
+    <button type="button" 
+            class="btn btn-outline-danger" 
+            title="Delete"
+            data-bs-toggle="modal" 
+            data-bs-target="#deleteModal{{ dept.department_id }}">
+      <i class="bi bi-trash-fill"></i>
+    </button>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal fade" 
+       id="deleteModal{{ dept.department_id }}" 
+       tabindex="-1" 
+       aria-labelledby="deleteLabel{{ dept.department_id }}" 
+       aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title" id="deleteLabel{{ dept.department_id }}">
+            Delete Department
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          Are you sure you want to delete 
+          <strong>{{ dept.dept_name }}</strong>?
+          <br><small class="text-muted">This action cannot be undone.</small>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            Cancel
+          </button>
+          <form method="POST" action="{% url 'department_delete' dept.department_id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Confirm Delete</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</td>
+
+                <td>{{ dept.department_id }}</td>
+                <td>{{ dept.dept_name }}</td>
+                <td>{{ dept.dept_description }}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5" class="text-center">No Departments Found</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'assets/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'assets/js/dataTables.responsive.min.js' %}"></script>
+<script>
+  $(document).ready(function() {
+    $('#myTable').DataTable({
+      responsive: true
+    });
+  });
+</script>
+{% endblock %}

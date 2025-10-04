@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>{% block title %}KWARTZ{% endblock %}</title>
+
+  <link href="{% static 'assets/img/favicon.png' %}" rel="icon" />
+  <link href="{% static 'assets/css/bootstrap.min.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/css/bootstrap-icons.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/css/boxicons.min.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/css/remixicon.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/css/style.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/css/lateststyle.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/css/jquery.dataTables.min.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/css/responsive.dataTables.min.css' %}" rel="stylesheet" />
+
+  {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+  <!-- ======= Header ======= -->
+  <header id="header" class="header fixed-top d-flex align-items-center">
+    <div class="d-flex align-items-center justify-content-between">
+      <i class="bi bi-list toggle-sidebar-btn"></i>
+    </div>
+    <nav class="header-nav ms-auto">
+      <ul class="d-flex align-items-center">
+        <li class="nav-item dropdown pe-3">
+          <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
+            <img src="{% static 'assets/img/profile-img.jpg' %}" alt="Profile" class="rounded-circle" />
+            <span class="d-none d-md-block dropdown-toggle ps-2">{{ username }}</span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
+            <li class="dropdown-header">
+              <h6>{{ username }}</h6>
+              <span>Administrator</span>
+            </li>
+            <li><hr class="dropdown-divider" /></li>
+            <li>
+              <a class="dropdown-item d-flex align-items-center" href="#"><i class="bi bi-box-arrow-right"></i> Sign Out</a>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- ======= Sidebar ======= -->
+  <aside id="sidebar" class="sidebar">
+    <ul class="sidebar-nav" id="sidebar-nav">
+      <li class="nav-item">
+        <a class="nav-link" href="#"><i class="bi bi-grid"></i> <span>Dashboard</span></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link collapsed" data-bs-target="#master-nav" data-bs-toggle="collapse" href="#">
+          <i class="bi bi-menu-button-wide"></i> <span>Master</span><i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="master-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+          <li><a href="{% url 'department_list' %}"><i class="bi bi-circle"></i><span>Department</span></a></li>
+          <li><a href="{% url 'location_list' %}"><i class="bi bi-circle"></i><span>Location</span></a></li>
+          <li><a href="{% url 'designation_list' %}"><i class="bi bi-circle"></i><span>Designation</span></a></li>
+        </ul>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- ======= Main Content ======= -->
+  <main id="main" class="main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer id="footer" class="footer">
+    <div class="copyright">
+      &copy; Copyright <strong><span>Datahub Technologies</span></strong>. All Rights Reserved
+    </div>
+  </footer>
+
+  <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'assets/js/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'assets/js/dataTables.responsive.min.js' %}"></script>
+  <script src="{% static 'assets/js/main.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>
