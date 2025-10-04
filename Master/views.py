@@ -28,7 +28,6 @@ def login_view(request):
                 messages.error(request, "Invalid username or password.")
     except Exception as e:
         print("Error during login:")
-        traceback.print_exc()
         messages.error(request, f"Something went wrong: {str(e)}")
 
     return render(request, 'login.html')
@@ -40,7 +39,6 @@ def logout_view(request):
         print("User logged out successfully")
     except Exception as e:
         print("Error during logout:")
-        traceback.print_exc()
         messages.error(request, f"Logout failed: {str(e)}")
 
     return redirect('login')
@@ -93,9 +91,7 @@ def department_add(request):
                 return redirect('department_list')
         else:
             form = DepartmentForm()
-    except DatabaseError as e:
-        messages.error(request, f"Database error while adding department: {e}")
-        form = DepartmentForm()
+
     except Exception as e:
         messages.error(request, f"Unexpected error: {e}")
         form = DepartmentForm()
@@ -122,9 +118,6 @@ def department_edit(request, pk):
                 return redirect('department_list')
         else:
             form = DepartmentForm(instance=dept)
-    except DatabaseError as e:
-        messages.error(request, f"Database error while updating department: {e}")
-        form = DepartmentForm()
     except Exception as e:
         messages.error(request, f"Unexpected error: {e}")
         form = DepartmentForm()
@@ -165,9 +158,6 @@ def department_delete(request, pk):
             dept.delete()
             messages.success(request, "Department deleted successfully.")
             return redirect('department_list')
-    except DatabaseError as e:
-        messages.error(request, f"Database error while deleting department: {e}")
-        return redirect('department_list')
     except Exception as e:
         messages.error(request, f"Unexpected error: {e}")
         return redirect('department_list')
