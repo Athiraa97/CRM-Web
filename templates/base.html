@@ -15,6 +15,7 @@
   <link href="{% static 'assets/css/lateststyle.css' %}" rel="stylesheet" />
   <link href="{% static 'assets/css/jquery.dataTables.min.css' %}" rel="stylesheet" />
   <link href="{% static 'assets/css/responsive.dataTables.min.css' %}" rel="stylesheet" />
+  
 
   {% block extra_head %}{% endblock %}
 </head>
@@ -62,6 +63,11 @@
           <li><a href="{% url 'location_list' %}"><i class="bi bi-circle"></i><span>Location</span></a></li>
           <li><a href="{% url 'designation_list' %}"><i class="bi bi-circle"></i><span>Designation</span></a></li>
         </ul>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link collapsed" data-bs-target="#master-nav" data-bs-toggle="collapse" href="#">
+          <i class="bi bi-menu-button-wide"></i> <span>Employee</span>
+        </a>
       </li>
     </ul>
   </aside>
