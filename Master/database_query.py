@@ -73,3 +73,17 @@ def get_locations() -> List[Dict]:
 def is_location_used(location_id) -> bool:
     """Skip check since no related table exists yet."""
     return False
+
+def get_designations_by_department(department_id: int) -> List[Dict]:
+    """Fetch all designations under a specific department."""
+    sql = """
+        SELECT 
+            designation_id, 
+            des_name AS designation_name
+        FROM master_designation
+        WHERE department_id = %s
+        ORDER BY des_name
+    """
+    with connection.cursor() as cursor:
+        cursor.execute(sql, [department_id])
+        return dictfetchall(cursor)

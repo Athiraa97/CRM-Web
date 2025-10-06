@@ -1,16 +1,32 @@
 from django import forms
-from django.forms import ModelForm, modelformset_factory
+from django.forms import inlineformset_factory
 from .models import Employee, Skills
 
-class EmployeeForm(ModelForm):
+
+class EmployeeForm(forms.ModelForm):
     class Meta:
         model = Employee
-        exclude = ['created_at', 'created_by', 'updated_at', 'updated_by']
+        fields = '__all__'
+        exclude = ['created_by', 'updated_by', 'created_at', 'updated_at']
+        widgets = {
+            'join_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'emp_start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'emp_end_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
 
 
-SkillFormSet = modelformset_factory(
+class SkillForm(forms.ModelForm):
+    class Meta:
+        model = Skills
+        fields = ['skills_name']
+
+
+SkillFormSet = inlineformset_factory(
+    Employee,
     Skills,
-    fields=('skills_name',),
+    form=SkillForm,
+    fields=['skills_name'],
     extra=1,
     can_delete=True
 )

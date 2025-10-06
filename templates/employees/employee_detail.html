@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Employee Details{% endblock %}
+
+{% block content %}
+<div class="pagetitle">
+  <h1>Employee Details</h1>
+  <nav>
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
+      <li class="breadcrumb-item active">Employee Details</li>
+    </ol>
+  </nav>
+</div>
+
+<section class="section">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+
+      <div class="card border border-primary shadow-sm">
+        <div class="card-body p-4">
+
+          <!-- Header Section -->
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="card-title text-primary mb-0">Employee Information</h4>
+            <div>
+              {% if emp.photo %}
+                <img src="{{ emp.photo.url }}" alt="Employee Photo"
+                     class="rounded-circle border border-primary shadow-sm"
+                     style="width: 110px; height: 110px; object-fit: cover;">
+              {% else %}
+                <img src="{% static 'assets/img/default-profile.png' %}" alt="No Photo"
+                     class="rounded-circle border border-secondary shadow-sm"
+                     style="width: 110px; height: 110px; object-fit: cover;">
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Employee Info Table -->
+          <table class="table table-bordered align-middle">
+            <tbody>
+              <tr><th class="col-4">Employee No</th><td>{{ emp.empno }}</td></tr>
+              <tr><th>Employee Name</th><td>{{ emp.name }}</td></tr>
+              <tr><th>Phone No</th><td>{{ emp.phone|default:"—" }}</td></tr>
+              <tr><th>Address</th><td>{{ emp.address|linebreaksbr|default:"—" }}</td></tr>
+              <tr><th>Join Date</th><td>{{ emp.join_date|date:"d M Y"|default:"—" }}</td></tr>
+              <tr><th>Employee Start Date</th><td>{{ emp.emp_start_date|date:"d M Y"|default:"—" }}</td></tr>
+              <tr><th>Employee End Date</th><td>{{ emp.emp_end_date|date:"d M Y"|default:"—" }}</td></tr>
+              <tr>
+                <th>Status</th>
+                <td>
+                  {% if emp.status == 'active' %}
+                    <span class="badge bg-success px-3 py-2">Active</span>
+                  {% else %}
+                    <span class="badge bg-danger px-3 py-2">Inactive</span>
+                  {% endif %}
+                </td>
+              </tr>
+              <tr><th>Department</th><td>{{ emp.department }}</td></tr>
+              <tr><th>Designation</th><td>{{ emp.designation }}</td></tr>
+              <tr><th>Location</th><td>{{ emp.location }}</td></tr>
+              <tr><th>Created By</th><td>{{ emp.created_by|default:"—" }}</td></tr>
+              <tr><th>Created At</th><td>{{ emp.created_at|date:"d M Y, h:i A" }}</td></tr>
+              <tr><th>Updated By</th><td>{{ emp.updated_by|default:"—" }}</td></tr>
+              <tr><th>Updated At</th><td>{{ emp.updated_at|date:"d M Y, h:i A" }}</td></tr>
+            </tbody>
+          </table>
+
+          <!-- Skills Section -->
+          {% if skills %}
+          
+            <h5 class="mt-4 text-primary">Employee Skills</h5>
+            <ul class="list-group list-group-flush mb-3">
+              {% for s in skills %}
+                <li class="list-group-item">{{ s.skills_name }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+
+          <!-- Back Button -->
+          <div class="d-flex justify-content-center mt-3">
+            <a href="{% url 'employee_list' %}" class="btn btn-outline-success px-2">
+              <i class="bi bi-arrow-left-square me-2"></i>Back to List
+            </a>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+{% endblock %}

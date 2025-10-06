@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}{{ action }} Employee{% endblock %}
+
+{% block content %}
+<style>
+  textarea.form-control {
+    height: 75px !important;
+    resize: vertical;
+  }
+  .form-columns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .form-columns .form-group {
+    flex: 0 0 calc(50% - 10px); /* two columns */
+  }
+  @media (max-width: 768px) {
+    .form-columns .form-group {
+      flex: 0 0 100%; /* stack on small screens */
+    }
+  }
+</style>
+
+<div class="pagetitle">
+  <h1>{{ action }} Employee</h1>
+  <nav>
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
+      <li class="breadcrumb-item active">{{ action }} Employee</li>
+    </ol>
+  </nav>
+</div>
+
+<section class="section">
+  <div class="card border border-primary p-2 shadow-sm">
+    <h5 class="card-title mb-2">Enter Employee Details</h5>
+
+    <form method="POST" enctype="multipart/form-data"
+      action="{% if action == 'Edit' %}{% url 'employee_edit' form.instance.id %}{% else %}{% url 'employee_add' %}{% endif %}">
+      {% csrf_token %}
+
+      <div class="form-columns">
+        {% for field in form %}
+        <div class="form-group">
+          <label class="form-label">
+            {{ field.label }}{% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+          </label>
+          
+          {% if field.field.widget.input_type == "date" %}
+            {% render_field field class="form-control datepicker" %}
+          {% else %}
+            {% render_field field class="form-control" placeholder=field.label %}
+          {% endif %}
+          
+          {% if field.errors %}
+          <div class="text-danger small mt-1">{{ field.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+
+      <h5 class="card-title mt-3">Employee Skills</h5>
+
+      <div id="skill-formset">
+        {{ formset.management_form }}
+        {% for skill_form in formset %}
+        <div class="formset-row mb-2">
+          <div class="row">
+            <div class="col-md-10">
+              {% render_field skill_form.skills_name class="form-control" placeholder="Skill name" %}
+            </div>
+            <div class="col-md-2 text-center">
+              <button type="button" class="btn btn-danger remove-skill w-100">Remove</button>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <button type="button" id="add-skill" class="btn btn-outline-primary mt-2">+ Add Skill</button>
+
+      <div class="text-center mt-1">
+        <button type="submit" class="btn btn-primary">
+          {% if action == 'Edit' %}Update{% else %}Submit{% endif %}
+        </button>
+      </div>
+    </form>
+
+    <div class="text-center mt-2">
+      <a href="{% url 'employee_list' %}" class="btn btn-outline-success">
+        <i class="bi bi-arrow-left-square me-1"></i> Back
+      </a>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Bootstrap 5 Datepicker CSS & JS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.10.0/dist/css/bootstrap-datepicker3.min.css">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.10.0/dist/js/bootstrap-datepicker.min.js"></script>
+
+<script>
+$(function() {
+  // === Initialize Datepicker ===
+  $('.datepicker').datepicker({
+    format: 'yyyy-mm-dd',
+    todayHighlight: true,
+    autoclose: true,
+    orientation: 'bottom'
+  });
+
+  // === Department-based Designation & Location filtering ===
+  $('#id_department').change(function() {
+    const deptId = $(this).val();
+    const $designation = $('#id_designation');
+    const $location = $('#id_location');
+
+    $designation.empty().append('<option value="">Select Designation</option>');
+    $location.empty().append('<option value="">Select Location</option>');
+
+    if (deptId) {
+      $.getJSON("{% url 'ajax_designations' %}", { dept_id: deptId }, function(data) {
+        $.each(data.designations, function(_, item) {
+          $designation.append(new Option(item.designation_name, item.designation_id));
+        });
+      });
+      $.getJSON("{% url 'ajax_locations' %}", { dept_id: deptId }, function(data) {
+        $.each(data.locations, function(_, item) {
+          $location.append(new Option(item.location_name, item.location_id));
+        });
+      });
+    }
+  });
+
+  // === Dynamic Skill Formset Handling ===
+  const formsetDiv = $('#skill-formset');
+  let totalForms = $('#id_skills_set-TOTAL_FORMS');
+
+  $('#add-skill').click(function() {
+    const formIndex = formsetDiv.children('.formset-row').length;
+    const newForm = formsetDiv.children('.formset-row:first').clone(false);
+    newForm.find('input').val('');
+    newForm.find('input, select, textarea').each(function() {
+      const name = $(this).attr('name').replace(/-\d+-/, `-${formIndex}-`);
+      const id = 'id_' + name;
+      $(this).attr({ 'name': name, 'id': id });
+    });
+    formsetDiv.append(newForm);
+    totalForms.val(parseInt(totalForms.val()) + 1);
+  });
+
+  formsetDiv.on('click', '.remove-skill', function() {
+    if (formsetDiv.children('.formset-row').length > 1) {
+      $(this).closest('.formset-row').remove();
+      totalForms.val(parseInt(totalForms.val()) - 1);
+    }
+  });
+});
+</script>
+{% endblock %}
