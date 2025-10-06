@@ -7,10 +7,11 @@ from .forms import EmployeeForm, SkillFormSet
 from . import database_query
 from Master import database_query as db
 from Master.models import *
-import csv
-import logging
 
-logger = logging.getLogger(__name__)
+import openpyxl
+from openpyxl.utils import get_column_letter
+from openpyxl.styles import Font, Alignment, PatternFill
+# logger = logging.getLogger(__name__)
 
 # ------------------------------------------
 # EMPLOYEE LIST
@@ -29,7 +30,7 @@ def employee_list(request):
             'employees': rows, 'username': username
         })
     except Exception as e:
-        logger.error(f"Error in employee_list: {e}")
+
         messages.error(request, f"Failed to load employee list: {e}")
         return render(request, 'employees/employee_list.html', {'employees': [], 'username': request.user.username})
 
@@ -70,7 +71,6 @@ def employee_add(request):
             'action': 'Add'
         })
     except Exception as e:
-        logger.error(f"Error in employee_add: {e}")
         messages.error(request, f"Error while adding employee: {e}")
         return redirect('employee_list')
 
@@ -110,7 +110,6 @@ def employee_edit(request, pk):
             'action': 'Edit'
         })
     except Exception as e:
-        logger.error(f"Error in employee_edit: {e}")
         messages.error(request, f"Error editing employee: {e}")
         return redirect('employee_list')
 
@@ -186,57 +185,68 @@ def employee_delete(request, pk):
             return redirect('employee_list')
         return render(request, 'employees/employee_detail.html', {'object': emp, 'username': username})
     except Exception as e:
-        logger.error(f"Error in employee_delete: {e}")
         messages.error(request, f"Failed to delete employee: {e}")
         return redirect('employee_list')
 
 
 # ------------------------------------------
-# DOWNLOAD SELECTED EMPLOYEES (CSV)
+# DOWNLOAD SELECTED EMPLOYEES (excel)
 # ------------------------------------------
-@login_required
+
 def download_selected(request):
-    try:
-        username = request.user.username
-        ids = request.POST.get('ids', '')
-        if not ids:
-            return HttpResponse('No ids provided', status=400)
+    # Create workbook & sheet
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Employees"
 
-        id_list = ids.split(',')
-        employees = Employee.objects.filter(id__in=id_list)
+    # Header row
+    headers = [
+        "Employee No", "Name", "Phone", "Department",
+        "Designation", "Location", "Status", "Join Date","Start Date","Skills","Photo"
+    ]
+    ws.append(headers)
 
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="employees_selected.csv"'
+    # Query employees
+    employees = Employee.objects.select_related("department", "designation", "location").all()
 
-        writer = csv.writer(response)
-        writer.writerow([
-            'Employee No', 'Name', 'Phone', 'Address', 'Join Date',
-            'Employee Start Date', 'Employee End Date', 'Photo URL',
-            'Status', 'Department', 'Designation', 'Location',
-            'Created By', 'Created At', 'Updated By', 'Updated At'
+    # Add rows (convert related model objects to strings)
+    for emp in employees:
+        ws.append([
+            emp.empno,
+            emp.name,
+            emp.phone or "",
+            str(emp.department) if emp.department else "",
+            str(emp.designation) if emp.designation else "",
+            str(emp.location) if emp.location else "",
+            emp.status.capitalize(),
+            emp.join_date.strftime("%Y-%m-%d") if emp.join_date else "",
+            emp.emp_start_date.strftime("%Y-%m-%d") if emp.join_date else "",
+            ", ".join(emp.skills.values_list('skills_name', flat=True)),
+            emp.photo.url if emp.photo else '',
         ])
 
-        for e in employees:
-            writer.writerow([
-                e.empno,
-                e.name,
-                e.phone or '',
-                e.address or '',
-                e.join_date.strftime('%Y-%m-%d') if e.join_date else '',
-                e.emp_start_date.strftime('%Y-%m-%d') if e.emp_start_date else '',
-                e.emp_end_date.strftime('%Y-%m-%d') if e.emp_end_date else '',
-                e.photo.url if e.photo else '',
-                e.status,
-                e.department or '',
-                e.designation or '',
-                e.location or '',
-                e.created_by or '',
-                e.created_at.strftime('%Y-%m-%d %H:%M:%S') if e.created_at else '',
-                e.updated_by or '',
-                e.updated_at.strftime('%Y-%m-%d %H:%M:%S') if e.updated_at else ''
-            ])
-        return response
-    except Exception as e:
-        logger.error(f"Error in download_selected: {e}")
-        messages.error(request, f"Error while exporting employees: {e}")
-        return redirect('employee_list')
+    #  Set all column widths to 18
+    for col in range(1, len(headers) + 1):
+        ws.column_dimensions[get_column_letter(col)].width = 15
+
+    #  Freeze header row
+    ws.freeze_panes = "A2"
+
+    #  Style header row
+    header_fill = PatternFill(start_color="CCE5FF", end_color="CCE5FF", fill_type="solid")
+    header_font = Font(bold=True, color="000000")
+    header_alignment = Alignment(horizontal="center", vertical="center")
+
+    for cell in ws[1]:
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = header_alignment
+
+    #  Return Excel file as HTTP response
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="employees.xlsx"'
+
+    wb.save(response)
+    return response
