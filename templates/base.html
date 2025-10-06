@@ -82,11 +82,20 @@
       &copy; Copyright <strong><span>Datahub Technologies</span></strong>. All Rights Reserved
     </div>
   </footer>
+ {% block extra_scripts %}
+  <!-- 1️⃣ jQuery FIRST -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
+  <!-- 2️⃣ Bootstrap -->
   <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+
+  <!-- 3️⃣ DataTables -->
   <script src="{% static 'assets/js/jquery.dataTables.min.js' %}"></script>
   <script src="{% static 'assets/js/dataTables.responsive.min.js' %}"></script>
+
+  <!-- 4️⃣ Your custom JS -->
   <script src="{% static 'assets/js/main.js' %}"></script>
-  {% block extra_js %}{% endblock %}
+{% endblock %}
+
 </body>
 </html>

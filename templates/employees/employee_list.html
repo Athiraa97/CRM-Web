@@ -208,3 +208,69 @@ $(document).ready(function() {
 });
 </script>
 {% endblock %}
+{% block extra_scripts %}
+<!-- jQuery (only once) -->
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
+<!-- DataTables -->
+<script src="{% static 'assets/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'assets/js/dataTables.responsive.min.js' %}"></script>
+
+<!-- Select2 -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<!-- Your custom script -->
+<script src="{% static 'assets/js/main.js' %}"></script>
+
+<script>
+$(document).ready(function() {
+  // Initialize DataTable
+  $('#myTable').DataTable({
+    responsive: true,
+    pageLength: 10
+  });
+
+  // ✅ Initialize Select2 safely
+  if ($.fn.select2) {
+    $('select').select2({
+      width: '100%',
+      placeholder: "Select an option"
+    });
+  }
+
+  // Select All
+  $('#selectAll').on('click', function() {
+    $('.rowCheckbox').prop('checked', this.checked);
+    toggleDownloadButton();
+  });
+
+  $('.rowCheckbox').on('change', toggleDownloadButton);
+
+  function toggleDownloadButton() {
+    let selected = $('.rowCheckbox:checked').length > 0;
+    $('#downloadSelected').prop('disabled', !selected);
+  }
+
+  // On Submit - Collect Selected IDs
+  $('#downloadForm').on('submit', function(e) {
+    e.preventDefault();
+    let ids = $('.rowCheckbox:checked').map(function() {
+      return this.value;
+    }).get().join(',');
+
+    if (!ids) {
+      alert("Please select at least one employee.");
+      return false;
+    }
+
+    $('<input>').attr({
+      type: 'hidden',
+      name: 'ids',
+      value: ids
+    }).appendTo('#downloadForm');
+
+    this.submit();
+  });
+});
+</script>
+{% endblock %}

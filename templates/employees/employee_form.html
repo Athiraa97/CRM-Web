@@ -16,11 +16,11 @@
     gap: 10px;
   }
   .form-columns .form-group {
-    flex: 0 0 calc(50% - 10px); /* two columns */
+    flex: 0 0 calc(50% - 10px);
   }
   @media (max-width: 768px) {
     .form-columns .form-group {
-      flex: 0 0 100%; /* stack on small screens */
+      flex: 0 0 100%;
     }
   }
 </style>
@@ -43,11 +43,13 @@
       action="{% if action == 'Edit' %}{% url 'employee_edit' form.instance.id %}{% else %}{% url 'employee_add' %}{% endif %}">
       {% csrf_token %}
 
+      <!-- Employee Fields -->
       <div class="form-columns">
         {% for field in form %}
         <div class="form-group">
           <label class="form-label">
-            {{ field.label }}{% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+            {{ field.label }}
+            {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
           </label>
           {% render_field field class="form-control" placeholder=field.label %}
           {% if field.errors %}
@@ -56,15 +58,14 @@
         </div>
         {% endfor %}
       </div>
-{% comment %} 
-      <hr> {% endcomment %}
-      <h5 class="card-title">Employee Skills</h5>
 
+      <!-- Skills Section -->
+      <h5 class="card-title mt-3">Employee Skills</h5>
       <div id="skill-formset">
         {{ formset.management_form }}
         {% for skill_form in formset %}
-        <div class="formset-row mb-2">
-          <div class="row">
+        <div class="formset-row mb-2 border p-2 rounded">
+          <div class="row align-items-center">
             <div class="col-md-10">
               {% render_field skill_form.skills_name class="form-control" placeholder="Skill name" %}
             </div>
@@ -78,7 +79,7 @@
 
       <button type="button" id="add-skill" class="btn btn-outline-primary mt-2">+ Add Skill</button>
 
-      <div class="text-center mt-1">
+      <div class="text-center mt-3">
         <button type="submit" class="btn btn-primary">
           {% if action == 'Edit' %}Update{% else %}Submit{% endif %}
         </button>
@@ -95,55 +96,68 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-$(function() {
-  // === Department-based Designation & Location filtering ===
-  $('#id_department').change(function() {
-    const deptId = $(this).val();
-    const $designation = $('#id_designation');
-    const $location = $('#id_location');
+  <!-- ✅ Load jQuery FIRST -->
+  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 
-    $designation.empty().append('<option value="">Select Designation</option>');
-    $location.empty().append('<option value="">Select Location</option>');
+  <!-- ✅ Then DataTables or other libraries -->
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
 
-    if (deptId) {
-      $.getJSON("{% url 'ajax_designations' %}", { dept_id: deptId }, function(data) {
-        $.each(data.designations, function(_, item) {
-          $designation.append(new Option(item.designation_name, item.designation_id));
+  <script>
+  $(function() {
+    // === Department-based Designation filtering ===
+    $('#id_department').change(function() {
+      const deptId = $(this).val();
+      const $designation = $('#id_designation');
+
+      $designation.empty().append('<option value="">Select Designation</option>');
+
+      if (deptId) {
+        $.ajax({
+          url: "{% url 'ajax_designations' %}",
+          data: { dept_id: deptId },
+          dataType: 'json',
+          success: function(data) {
+            $.each(data.designations, function(index, item) {
+              $designation.append(new Option(item.des_name, item.designation_id));
+            });
+          },
+          error: function(xhr, status, error) {
+            console.error("Error fetching designations:", error);
+          }
         });
-      });
-      $.getJSON("{% url 'ajax_locations' %}", { dept_id: deptId }, function(data) {
-        $.each(data.locations, function(_, item) {
-          $location.append(new Option(item.location_name, item.location_id));
-        });
-      });
-    }
-  });
-
-  // === Dynamic Skill Formset Handling ===
-  const formsetDiv = $('#skill-formset');
-  let totalForms = $('#id_skills_set-TOTAL_FORMS');
-
-  $('#add-skill').click(function() {
-    const formIndex = formsetDiv.children('.formset-row').length;
-    const newForm = formsetDiv.children('.formset-row:first').clone(false);
-    newForm.find('input').val('');
-    newForm.find('input, select, textarea').each(function() {
-      const name = $(this).attr('name').replace(/-\d+-/, `-${formIndex}-`);
-      const id = 'id_' + name;
-      $(this).attr({ 'name': name, 'id': id });
+      }
     });
-    formsetDiv.append(newForm);
-    totalForms.val(parseInt(totalForms.val()) + 1);
-  });
 
-  formsetDiv.on('click', '.remove-skill', function() {
-    if (formsetDiv.children('.formset-row').length > 1) {
-      $(this).closest('.formset-row').remove();
-      totalForms.val(parseInt(totalForms.val()) - 1);
-    }
+    // === Dynamic Skill Formset Handling ===
+    const formsetDiv = $('#skill-formset');
+    let totalForms = $('#id_skills_set-TOTAL_FORMS');
+
+    $('#add-skill').click(function() {
+      const formIndex = parseInt(totalForms.val());
+      const emptyRow = formsetDiv.children('.formset-row:first').clone(false);
+      emptyRow.find('input').val('');
+
+      emptyRow.find(':input').each(function() {
+        const name = $(this).attr('name');
+        if (name) {
+          const newName = name.replace(/-\d+-/, `-${formIndex}-`);
+          const newId = 'id_' + newName;
+          $(this).attr({'name': newName, 'id': newId});
+        }
+      });
+
+      formsetDiv.append(emptyRow);
+      totalForms.val(formIndex + 1);
+    });
+
+    formsetDiv.on('click', '.remove-skill', function() {
+      if (formsetDiv.children('.formset-row').length > 1) {
+        $(this).closest('.formset-row').remove();
+        let count = formsetDiv.children('.formset-row').length;
+        totalForms.val(count);
+      }
+    });
   });
-});
-</script>
+  </script>
 {% endblock %}

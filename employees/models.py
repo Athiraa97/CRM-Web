@@ -30,11 +30,18 @@ class Employee(models.Model):
 
 
 class Skills(models.Model):
-    # skill_id = models.CharField(primary_key=True, max_length=32, default=uuid.uuid4, editable=False)
     skills_name = models.CharField(max_length=200)
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    employee = models.ForeignKey(
+        Employee,
+        on_delete=models.CASCADE,
+        related_name='skills'   # ✅ must exist!
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.CharField(max_length=150, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
     updated_by = models.CharField(max_length=150, null=True, blank=True)
+
+    def __str__(self):
+        return self.skills_name
+
 

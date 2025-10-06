@@ -6,6 +6,7 @@ from .models import Employee, Skills
 from .forms import EmployeeForm, SkillFormSet
 from . import database_query
 from Master import database_query as db
+from Master.models import *
 import csv
 import logging
 
@@ -59,10 +60,12 @@ def employee_add(request):
             formset = SkillFormSet()
 
         departments = db.get_departments()
+        locations = db.get_locations()
         return render(request, 'employees/employee_form.html', {
             'form': form,
             'formset': formset,
             'departments': departments,
+            'locations':locations,
             'username': username,
             'action': 'Add'
         })
@@ -97,10 +100,12 @@ def employee_edit(request, pk):
             formset = SkillFormSet(instance=emp)
 
         departments = db.get_departments()
+        locations = db.get_locations()
         return render(request, 'employees/employee_form.html', {
             'form': form,
             'formset': formset,
             'departments': departments,
+            'locations':locations,
             'username': username,
             'action': 'Edit'
         })
@@ -114,48 +119,57 @@ def employee_edit(request, pk):
 # AJAX: DESIGNATIONS BY DEPARTMENT
 # ------------------------------------------
 @login_required
-def ajax_designations(request):
-    try:
-        dept_id = request.GET.get('department_id')
-        data = db.get_designations_by_department(dept_id)
-        return JsonResponse({'designations': data})
-    except Exception as e:
-        logger.error(f"Error in ajax_designations: {e}")
-        return JsonResponse({'error': str(e)}, status=500)
-
-
-# ------------------------------------------
-# AJAX: LOCATIONS BY DEPARTMENT
-# ------------------------------------------
+# def ajax_designations(request):
+#     try:
+#         dept_id = request.GET.get('dept_id')
+#         data = db.get_designations_by_department(dept_id)
+#         print("data: ",data)
+#         return JsonResponse({'designations': data})
+#     except Exception as e:
+#         logger.error(f"Error in ajax_designations: {e}")
+#         return JsonResponse({'error': str(e)}, status=500)  
 @login_required
-def ajax_locations(request):
-    try:
-        dept_id = request.GET.get('dept_id')
-        data = db.get_locations(dept_id)
-        return JsonResponse({'locations': data})
-    except Exception as e:
-        logger.error(f"Error in ajax_locations: {e}")
-        return JsonResponse({'error': str(e)}, status=500)
+def ajax_designations(request):
+    dept_id = request.GET.get('dept_id')
+    print("Selected Department ID:", dept_id)
 
+    if not dept_id:
+        return JsonResponse({'designations': []})
+
+    designations = Designation.objects.filter(department_id=dept_id).values(
+        'designation_id', 'des_name'
+    )
+
+    return JsonResponse({'designations': list(designations)})
 
 # ------------------------------------------
 # EMPLOYEE DETAIL
 # ------------------------------------------
 @login_required
 def employee_detail(request, pk):
-    try:
-        username = request.user.username
-        emp = get_object_or_404(Employee, pk=pk)
-        skills = emp.skills.all().order_by('skills_name')
-        return render(request, 'employees/employee_detail.html', {
-            'emp': emp,
-            'skills': skills,
-            'username': username
-        })
-    except Exception as e:
-        logger.error(f"Error in employee_detail: {e}")
-        messages.error(request, f"Unable to load employee details: {e}")
-        return redirect('employee_list')
+    username = request.user.username
+    emp = get_object_or_404(Employee, pk=pk)
+    skills = emp.skills.all().order_by('skills_name')  
+    print(f'emp -- {emp},{skills}')
+    return render(request, 'employees/employee_detail.html', {
+        'emp': emp,
+        'skills': skills,
+        'username': username
+    })
+    # try:
+    #     username = request.user.username
+    #     emp = get_object_or_404(Employee, pk=pk)
+    #     skills = emp.skills.all().order_by('skills_name')  
+    #     print(f'emp -- {emp},{skills}')
+    #     return render(request, 'employees/employee_detail.html', {
+    #         'emp': emp,
+    #         'skills': skills,
+    #         'username': username
+    #     })
+    # except Exception as e:
+    #     logger.error(f"Error in employee_detail: {e}")
+    #     messages.error(request, f"Unable to load employee details: {e}")
+    #     return redirect('employee_list')
 
 
 # ------------------------------------------

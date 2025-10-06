@@ -28,42 +28,45 @@ def fetch_employee_details():
 
 def fetch_employees(filters=None):
     """
-    Return list of employee rows.
-    filters is an optional dict (e.g., {'name': 'John', 'date_from': '2024-01-01'})
+    Fetch employees with proper joins:
+    - Department comes from Designation table.
+    - Filters by join_date range if provided.
     """
-    sql = """
+    base_sql = """
         SELECT e.id, e.empno, e.name, e.phone, e.status,
                d.dept_name AS department,
                l.loc_name AS location,
                des.des_name AS designation,
                GROUP_CONCAT(s.skills_name SEPARATOR ', ') AS skills
         FROM employees_employee e
-        LEFT JOIN Master_department d ON e.department_id = d.department_id
-        LEFT JOIN Master_location l ON e.location_id = l.location_id
         LEFT JOIN Master_designation des ON e.designation_id = des.designation_id
+        LEFT JOIN Master_department d ON des.department_id = d.department_id
+        LEFT JOIN Master_location l ON e.location_id = l.location_id
         LEFT JOIN employees_skills s ON e.id = s.employee_id
-        GROUP BY e.id, e.empno, e.name, e.phone, e.status, d.dept_name, l.loc_name, des.des_name
-        ORDER BY e.name;
     """
+
+    where_clauses = []
     params = []
 
     if filters:
-        if 'name' in filters and filters['name']:
-            sql += " AND name LIKE %s"
-            params.append(f"%{filters['name']}%")
-
         if 'date_from' in filters and filters['date_from']:
-            sql += " AND join_date >= %s"
+            where_clauses.append("e.join_date >= %s")
             params.append(filters['date_from'])
-
         if 'date_to' in filters and filters['date_to']:
-            sql += " AND join_date <= %s"
+            where_clauses.append("e.join_date <= %s")
             params.append(filters['date_to'])
 
+    if where_clauses:
+        base_sql += " WHERE " + " AND ".join(where_clauses)
+
+    base_sql += """
+        GROUP BY e.id, e.empno, e.name, e.phone, e.status, d.dept_name, l.loc_name, des.des_name
+        ORDER BY e.name;
+    """
+
     with connection.cursor() as cursor:
-        cursor.execute(sql, params)
-        cols = [c[0] for c in cursor.description]
-        rows = [dict(zip(cols, row)) for row in cursor.fetchall()]
+        cursor.execute(base_sql, params)
+        columns = [col[0] for col in cursor.description]
+        rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
 
     return rows
-
