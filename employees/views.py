@@ -1,4 +1,3 @@
-
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponse
@@ -8,159 +7,222 @@ from .forms import EmployeeForm, SkillFormSet
 from . import database_query
 from Master import database_query as db
 import csv
+import logging
 
+logger = logging.getLogger(__name__)
+
+# ------------------------------------------
+# EMPLOYEE LIST
+# ------------------------------------------
 @login_required
 def employee_list(request):
-    username = request.user.username
-    filters = {}
-    if request.GET.get('date_from'):
-        filters['date_from'] = request.GET.get('date_from')
-    if request.GET.get('date_to'):
-        filters['date_to'] = request.GET.get('date_to')
-    rows = database_query.fetch_employees(filters)
-    return render(request, 'employees/employee_list.html', {
-        'employees': rows, 'username': username
-    })
+    try:
+        username = request.user.username
+        filters = {}
+        if request.GET.get('date_from'):
+            filters['date_from'] = request.GET.get('date_from')
+        if request.GET.get('date_to'):
+            filters['date_to'] = request.GET.get('date_to')
+        rows = database_query.fetch_employees(filters)
+        return render(request, 'employees/employee_list.html', {
+            'employees': rows, 'username': username
+        })
+    except Exception as e:
+        logger.error(f"Error in employee_list: {e}")
+        messages.error(request, f"Failed to load employee list: {e}")
+        return render(request, 'employees/employee_list.html', {'employees': [], 'username': request.user.username})
 
 
+# ------------------------------------------
+# ADD EMPLOYEE
+# ------------------------------------------
 @login_required
 def employee_add(request):
     username = request.user.username
-    if request.method == 'POST':
-        form = EmployeeForm(request.POST, request.FILES)
-        formset = SkillFormSet(request.POST)
-        if form.is_valid() and formset.is_valid():
-            print("Form is valid")
-            emp = form.save(commit=False)
-            emp.created_by = username
-            emp.updated_by = username
-            emp.save()
+    try:
+        if request.method == 'POST':
+            form = EmployeeForm(request.POST, request.FILES)
+            formset = SkillFormSet(request.POST)
+            if form.is_valid() and formset.is_valid():
+                emp = form.save(commit=False)
+                emp.created_by = username
+                emp.updated_by = username
+                emp.save()
+                formset.instance = emp
+                formset.save()
+                messages.success(request, 'Employee created successfully.')
+                return redirect('employee_list')
+            else:
+                messages.warning(request, 'Please correct the form errors.')
+        else:
+            form = EmployeeForm()
+            formset = SkillFormSet()
 
-            formset.instance = emp
-            formset.save()
-            messages.success(request, 'Employee created successfully.')
-            return redirect('employee_list')
-    else:
-        form = EmployeeForm()
-        formset = SkillFormSet()
-
-    departments = db.get_departments()
-    return render(request, 'employees/employee_form.html', {
-        'form': form,
-        'formset': formset,
-        'departments': departments,
-        'username': username,
-        'action': 'Add'
-    })
+        departments = db.get_departments()
+        return render(request, 'employees/employee_form.html', {
+            'form': form,
+            'formset': formset,
+            'departments': departments,
+            'username': username,
+            'action': 'Add'
+        })
+    except Exception as e:
+        logger.error(f"Error in employee_add: {e}")
+        messages.error(request, f"Error while adding employee: {e}")
+        return redirect('employee_list')
 
 
+# ------------------------------------------
+# EDIT EMPLOYEE
+# ------------------------------------------
 @login_required
 def employee_edit(request, pk):
     username = request.user.username
-    emp = get_object_or_404(Employee, pk=pk)
-    if request.method == 'POST':
-        form = EmployeeForm(request.POST, request.FILES, instance=emp)
-        formset = SkillFormSet(request.POST, instance=emp)
-        if form.is_valid() and formset.is_valid():
-            emp = form.save(commit=False)
-            emp.updated_by = username
-            emp.save()
-            formset.save()
-            messages.success(request, 'Employee updated successfully.')
-            return redirect('employee_list')
-    else:
-        form = EmployeeForm(instance=emp)
-        formset = SkillFormSet(instance=emp)
+    try:
+        emp = get_object_or_404(Employee, pk=pk)
+        if request.method == 'POST':
+            form = EmployeeForm(request.POST, request.FILES, instance=emp)
+            formset = SkillFormSet(request.POST, instance=emp)
+            if form.is_valid() and formset.is_valid():
+                emp = form.save(commit=False)
+                emp.updated_by = username
+                emp.save()
+                formset.save()
+                messages.success(request, 'Employee updated successfully.')
+                return redirect('employee_list')
+            else:
+                messages.warning(request, 'Please correct the form errors.')
+        else:
+            form = EmployeeForm(instance=emp)
+            formset = SkillFormSet(instance=emp)
 
-    departments = db.get_departments()
-    return render(request, 'employees/employee_form.html', {
-        'form': form,
-        'formset': formset,
-        'departments': departments,
-        'username': username,
-        'action': 'Edit'
-    })
+        departments = db.get_departments()
+        return render(request, 'employees/employee_form.html', {
+            'form': form,
+            'formset': formset,
+            'departments': departments,
+            'username': username,
+            'action': 'Edit'
+        })
+    except Exception as e:
+        logger.error(f"Error in employee_edit: {e}")
+        messages.error(request, f"Error editing employee: {e}")
+        return redirect('employee_list')
 
 
+# ------------------------------------------
+# AJAX: DESIGNATIONS BY DEPARTMENT
+# ------------------------------------------
 @login_required
 def ajax_designations(request):
-    dept_id = request.GET.get('department_id')
-    data = db.get_designations_by_department(dept_id)
-    print("data: ",data)
-    return JsonResponse({'designations': data})
+    try:
+        dept_id = request.GET.get('department_id')
+        data = db.get_designations_by_department(dept_id)
+        return JsonResponse({'designations': data})
+    except Exception as e:
+        logger.error(f"Error in ajax_designations: {e}")
+        return JsonResponse({'error': str(e)}, status=500)
 
 
+# ------------------------------------------
+# AJAX: LOCATIONS BY DEPARTMENT
+# ------------------------------------------
 @login_required
 def ajax_locations(request):
-    dept_id = request.GET.get('dept_id')
-    data = db.get_locations(dept_id)
-    return JsonResponse({'locations': data})
+    try:
+        dept_id = request.GET.get('dept_id')
+        data = db.get_locations(dept_id)
+        return JsonResponse({'locations': data})
+    except Exception as e:
+        logger.error(f"Error in ajax_locations: {e}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+# ------------------------------------------
+# EMPLOYEE DETAIL
+# ------------------------------------------
 @login_required
 def employee_detail(request, pk):
-    username = request.user.username
-    emp = get_object_or_404(Employee, pk=pk)
-    skills = emp.skills.all().order_by('skills_name')  # Fetch all skills linked to this employee
-    return render(request, 'employees/employee_detail.html', {
-        'emp': emp,
-        'skills': skills,
-        'username': username
-    })
+    try:
+        username = request.user.username
+        emp = get_object_or_404(Employee, pk=pk)
+        skills = emp.skills.all().order_by('skills_name')
+        return render(request, 'employees/employee_detail.html', {
+            'emp': emp,
+            'skills': skills,
+            'username': username
+        })
+    except Exception as e:
+        logger.error(f"Error in employee_detail: {e}")
+        messages.error(request, f"Unable to load employee details: {e}")
+        return redirect('employee_list')
 
+
+# ------------------------------------------
+# DELETE EMPLOYEE
+# ------------------------------------------
 @login_required
 def employee_delete(request, pk):
-    username = request.user.username
-    emp = get_object_or_404(Employee, pk=pk)
-    if request.method == 'POST':
-        emp.delete()
-        messages.success(request, 'Employee deleted')
+    try:
+        username = request.user.username
+        emp = get_object_or_404(Employee, pk=pk)
+        if request.method == 'POST':
+            emp.delete()
+            messages.success(request, 'Employee deleted successfully.')
+            return redirect('employee_list')
+        return render(request, 'employees/employee_detail.html', {'object': emp, 'username': username})
+    except Exception as e:
+        logger.error(f"Error in employee_delete: {e}")
+        messages.error(request, f"Failed to delete employee: {e}")
         return redirect('employee_list')
-    return render(request, 'employees/confirm_delete.html', {'object': emp,'username': username})
 
 
-
+# ------------------------------------------
+# DOWNLOAD SELECTED EMPLOYEES (CSV)
+# ------------------------------------------
 @login_required
 def download_selected(request):
-    username = request.user.username
-    """POST with selected ids (comma separated)"""
-    ids = request.POST.get('ids', '')
-    if not ids:
-        return HttpResponse('No ids', status=400)
+    try:
+        username = request.user.username
+        ids = request.POST.get('ids', '')
+        if not ids:
+            return HttpResponse('No ids provided', status=400)
 
-    id_list = ids.split(',')
-    employees = Employee.objects.filter(id__in=id_list)
+        id_list = ids.split(',')
+        employees = Employee.objects.filter(id__in=id_list)
 
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="employees_selected.csv"'
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="employees_selected.csv"'
 
-    writer = csv.writer(response)
-    # Write header
-    writer.writerow([
-        'Employee No', 'Name', 'Phone', 'Address', 'Join Date',
-        'Employee Start Date', 'Employee End Date', 'Photo URL',
-        'Status', 'Department', 'Designation', 'Location',
-        'Created By', 'Created At', 'Updated By', 'Updated At'
-    ])
-
-    # Write data rows
-    for e in employees:
+        writer = csv.writer(response)
         writer.writerow([
-            e.empno,
-            e.name,
-            e.phone or '',
-            e.address or '',
-            e.join_date.strftime('%Y-%m-%d') if e.join_date else '',
-            e.emp_start_date.strftime('%Y-%m-%d') if e.emp_start_date else '',
-            e.emp_end_date.strftime('%Y-%m-%d') if e.emp_end_date else '',
-            e.photo.url if e.photo else '',
-            e.status,
-            e.department if e.department else '',
-            e.designation if e.designation else '',
-            e.location if e.location else '',
-            e.created_by or '',
-            e.created_at.strftime('%Y-%m-%d %H:%M:%S') if e.created_at else '',
-            e.updated_by or '',
-            e.updated_at.strftime('%Y-%m-%d %H:%M:%S') if e.updated_at else ''
+            'Employee No', 'Name', 'Phone', 'Address', 'Join Date',
+            'Employee Start Date', 'Employee End Date', 'Photo URL',
+            'Status', 'Department', 'Designation', 'Location',
+            'Created By', 'Created At', 'Updated By', 'Updated At'
         ])
 
-    return response
-
+        for e in employees:
+            writer.writerow([
+                e.empno,
+                e.name,
+                e.phone or '',
+                e.address or '',
+                e.join_date.strftime('%Y-%m-%d') if e.join_date else '',
+                e.emp_start_date.strftime('%Y-%m-%d') if e.emp_start_date else '',
+                e.emp_end_date.strftime('%Y-%m-%d') if e.emp_end_date else '',
+                e.photo.url if e.photo else '',
+                e.status,
+                e.department or '',
+                e.designation or '',
+                e.location or '',
+                e.created_by or '',
+                e.created_at.strftime('%Y-%m-%d %H:%M:%S') if e.created_at else '',
+                e.updated_by or '',
+                e.updated_at.strftime('%Y-%m-%d %H:%M:%S') if e.updated_at else ''
+            ])
+        return response
+    except Exception as e:
+        logger.error(f"Error in download_selected: {e}")
+        messages.error(request, f"Error while exporting employees: {e}")
+        return redirect('employee_list')
