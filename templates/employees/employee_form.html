@@ -49,21 +49,16 @@
           <label class="form-label">
             {{ field.label }}{% if field.field.required %}<span class="text-danger">*</span>{% endif %}
           </label>
-          
-          {% if field.field.widget.input_type == "date" %}
-            {% render_field field class="form-control datepicker" %}
-          {% else %}
-            {% render_field field class="form-control" placeholder=field.label %}
-          {% endif %}
-          
+          {% render_field field class="form-control" placeholder=field.label %}
           {% if field.errors %}
           <div class="text-danger small mt-1">{{ field.errors|join:", " }}</div>
           {% endif %}
         </div>
         {% endfor %}
       </div>
-
-      <h5 class="card-title mt-3">Employee Skills</h5>
+{% comment %} 
+      <hr> {% endcomment %}
+      <h5 class="card-title">Employee Skills</h5>
 
       <div id="skill-formset">
         {{ formset.management_form }}
@@ -100,23 +95,9 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-<!-- Bootstrap 5 Datepicker CSS & JS -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.10.0/dist/css/bootstrap-datepicker3.min.css">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.10.0/dist/js/bootstrap-datepicker.min.js"></script>
-
 <script>
 $(function() {
-  // === Initialize Datepicker ===
-  $('.datepicker').datepicker({
-    format: 'yyyy-mm-dd',
-    todayHighlight: true,
-    autoclose: true,
-    orientation: 'bottom'
-  });
-
   // === Department-based Designation & Location filtering ===
   $('#id_department').change(function() {
     const deptId = $(this).val();

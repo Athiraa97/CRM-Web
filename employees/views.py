@@ -30,10 +30,12 @@ def employee_add(request):
         form = EmployeeForm(request.POST, request.FILES)
         formset = SkillFormSet(request.POST)
         if form.is_valid() and formset.is_valid():
+            print("Form is valid")
             emp = form.save(commit=False)
             emp.created_by = username
             emp.updated_by = username
             emp.save()
+
             formset.instance = emp
             formset.save()
             messages.success(request, 'Employee created successfully.')

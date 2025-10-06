@@ -7,6 +7,7 @@ from django.http import HttpResponseRedirect, HttpResponseServerError
 from django.db import DatabaseError
 from . import database_query as dbq
 from .models import *
+from employees.models import *
 from .forms import *
 
 
@@ -49,7 +50,16 @@ def dashboard(request):
     try:
         username = request.user.username
         print(f"Logged-in user: {username}")
-        context = {'username': username}
+        total_employees = Employee.objects.count()
+        # total_users = User.objects.count()
+        total_departments = Department.objects.count()
+        total_locations = Location.objects.count()
+
+        context = {'username': username,
+        'total_employees': total_employees,
+        # 'total_users': total_users,
+        'total_departments': total_departments,
+        'total_locations': total_locations,}
         return render(request, 'index.html', context)
     except Exception as e:
         print("Error loading dashboard:")
